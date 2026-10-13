@@ -40,6 +40,16 @@ const BADGE_LABEL: Partial<Record<Urgency, string>> = {
 const field =
   "rounded-lg border border-line bg-bg px-2 py-1 text-sm text-ink outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20";
 
+/** Digits only, with leading zeros collapsed so the value stays a canonical integer string. */
+function sanitizeInterval(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  return digits.replace(/^0+(?=\d)/, "");
+}
+
+function isPositiveInteger(value: number): boolean {
+  return Number.isInteger(value) && value >= 1;
+}
+
 function App() {
   const { todos, loaded, add, complete, reopen, remove, clearDone } = useTodos();
   const today = useToday();
@@ -121,23 +131,30 @@ function NewTodoForm({
   const [title, setTitle] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [repeats, setRepeats] = useState(false);
-  const [every, setEvery] = useState(1);
+  const [every, setEvery] = useState("1");
   const [unit, setUnit] = useState<RecurrenceUnit>("week");
 
-  function submit(e: FormEvent) {
+  function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const form = e.currentTarget;
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
     const trimmed = title.trim();
     if (!trimmed) return;
+    const interval = Number.parseInt(every, 10);
+    if (repeats && !isPositiveInteger(interval)) return;
     onAdd({
       title: trimmed,
       // Recurring todos need an anchor date; default to today.
       dueDate: dueDate || (repeats ? today : undefined),
-      recurrence: repeats ? { every: Math.max(1, every), unit } : undefined,
+      recurrence: repeats ? { every: interval, unit } : undefined,
     });
     setTitle("");
     setDueDate("");
     setRepeats(false);
-    setEvery(1);
+    setEvery("1");
   }
 
   return (
@@ -181,11 +198,15 @@ function NewTodoForm({
           <span className="flex items-center gap-2">
             every
             <input
-              type="number"
-              min={1}
+              type="text"
+              inputMode="numeric"
+              pattern="[1-9][0-9]*"
+              required
+              autoComplete="off"
+              title="Enter a whole number of 1 or more"
               className={`${field} w-16`}
               value={every}
-              onChange={(e) => setEvery(Number(e.target.value))}
+              onChange={(e) => setEvery(sanitizeInterval(e.target.value))}
               aria-label="Interval"
             />
             <select
