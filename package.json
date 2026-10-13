@@ -1,14 +1,17 @@
 {
   "name": "todoz",
   "private": true,
+  "description": "A todo app with deadlines, recurring tasks and overdue highlighting.",
+  "license": "MIT",
+  "author": "Bruno",
   "type": "module",
   "imports": {
     "#/*": "./src/*"
   },
   "scripts": {
     "dev": "vp dev",
-    "generate-routes": "tsr generate",
     "build": "vp build",
+    "test": "vp test",
     "preview": "vp preview"
   },
   "dependencies": {
@@ -23,7 +26,6 @@
   },
   "devDependencies": {
     "@tanstack/devtools-vite": "0.8.5",
-    "@tanstack/router-cli": "^1.132.0",
     "@types/node": "^22.10.2",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",

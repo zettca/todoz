@@ -27,14 +27,14 @@ jobs:
 
       - run: vp check
 
-      #- run: vp test
+      - run: vp test
 
       - name: Build
         run: vp build --base=/todoz/
 
       - uses: actions/upload-pages-artifact@v5
         with:
-          path: dist/
+          path: dist/client/
           retention-days: 1
 
   Publish:
