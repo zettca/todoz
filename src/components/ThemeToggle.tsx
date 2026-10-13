@@ -74,7 +74,7 @@ export default function ThemeToggle() {
       onClick={toggleMode}
       aria-label={label}
       title={label}
-      className="rounded-full border border-line bg-surface px-3 py-1.5 text-sm font-semibold text-muted transition hover:text-ink"
+      className="rounded-full border border-line bg-surface size-10 font-semibold text-muted transition hover:text-ink"
     >
       {ICON[mode]}
     </button>

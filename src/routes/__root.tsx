@@ -28,7 +28,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />
       </head>
-      <body className="min-h-screen bg-bg font-sans text-ink antialiased">
+      <body className="min-h-dvh bg-bg font-sans text-ink antialiased">
         {children}
         <TanStackDevtools
           config={{ position: "bottom-right" }}

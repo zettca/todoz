@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
 import ThemeToggle from "#/components/ThemeToggle";
 import {
   describeDue,
@@ -118,88 +117,68 @@ function NewTodoForm({
   onAdd: (todo: Omit<Todo, "id" | "createdAt">) => void;
   today: string;
 }) {
-  const [title, setTitle] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [repeats, setRepeats] = useState(false);
-  const [every, setEvery] = useState(1);
-  const [unit, setUnit] = useState<RecurrenceUnit>("week");
-
-  function submit(e: FormEvent) {
-    e.preventDefault();
-    const trimmed = title.trim();
-    if (!trimmed) return;
+  function addTodo(data: FormData) {
+    const title = (data.get("title") as string).trim();
+    if (!title) return;
+    const dueDate = (data.get("dueDate") as string) || undefined;
+    const repeats = data.has("repeats");
     onAdd({
-      title: trimmed,
+      title,
       // Recurring todos need an anchor date; default to today.
-      dueDate: dueDate || (repeats ? today : undefined),
-      recurrence: repeats ? { every: Math.max(1, every), unit } : undefined,
+      dueDate: dueDate ?? (repeats ? today : undefined),
+      recurrence: repeats
+        ? {
+            every: Math.max(1, Number(data.get("every")) || 1),
+            unit: data.get("unit") as RecurrenceUnit,
+          }
+        : undefined,
     });
-    setTitle("");
-    setDueDate("");
-    setRepeats(false);
-    setEvery(1);
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3">
+    <form action={addTodo} className="group space-y-3">
       <div className="flex gap-2">
         <input
+          name="title"
+          required
           className={`${field} flex-1 py-2 text-base`}
           placeholder="Add a todo…"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
           aria-label="Title"
         />
         <button
           type="submit"
-          className="rounded-lg bg-accent px-4 text-sm font-semibold text-accent-ink transition hover:opacity-90 disabled:opacity-40"
-          disabled={!title.trim()}
+          className="rounded-lg bg-accent px-4 text-sm font-semibold text-accent-ink transition hover:opacity-90 group-invalid:opacity-40"
         >
           Add
         </button>
       </div>
       <div className="flex flex-wrap items-center gap-4 text-sm text-muted">
         <label className="flex items-center gap-2">
-          {repeats ? "Starts" : "Due"}
-          <input
-            type="date"
-            className={field}
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-          />
+          <span className="group-has-[[name=repeats]:checked]:hidden">Due</span>
+          <span className="hidden group-has-[[name=repeats]:checked]:inline">Starts</span>
+          <input type="date" name="dueDate" className={field} />
         </label>
         <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            className="accent-accent"
-            checked={repeats}
-            onChange={(e) => setRepeats(e.target.checked)}
-          />
+          <input type="checkbox" name="repeats" className="accent-accent" />
           Repeat
         </label>
-        {repeats && (
-          <span className="flex items-center gap-2">
-            every
-            <input
-              type="number"
-              min={1}
-              className={`${field} w-16`}
-              value={every}
-              onChange={(e) => setEvery(Number(e.target.value))}
-              aria-label="Interval"
-            />
-            <select
-              className={field}
-              value={unit}
-              onChange={(e) => setUnit(e.target.value as RecurrenceUnit)}
-              aria-label="Unit"
-            >
-              <option value="day">days</option>
-              <option value="week">weeks</option>
-              <option value="month">months</option>
-            </select>
-          </span>
-        )}
+        <span className="hidden items-center gap-2 group-has-[[name=repeats]:checked]:flex">
+          every
+          <input
+            type="text"
+            name="every"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            defaultValue={1}
+            className={`${field} w-16`}
+            aria-label="Interval"
+          />
+          <select name="unit" defaultValue="week" className={field} aria-label="Unit">
+            <option value="day">days</option>
+            <option value="week">weeks</option>
+            <option value="month">months</option>
+          </select>
+        </span>
       </div>
     </form>
   );
@@ -231,10 +210,10 @@ function TodoItem({
         onChange={onToggle}
         aria-label={isDone ? "Reopen" : "Complete"}
       />
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 gap-1">
         <p className={isDone ? "text-muted line-through" : "font-medium"}>{todo.title}</p>
         {(due || todo.recurrence) && (
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
             {badge && (
               <span className={`rounded-full px-2 py-0.5 font-semibold ${style.badge}`}>
                 {badge}
