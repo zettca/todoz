@@ -1,73 +1,261 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState, type FormEvent } from "react";
+import ThemeToggle from "#/components/ThemeToggle";
+import {
+  describeDue,
+  describeRecurrence,
+  getUrgency,
+  sortTodos,
+  type RecurrenceUnit,
+  type Todo,
+  type Urgency,
+} from "#/lib/todos";
+import { useToday, useTodos } from "#/lib/useTodos";
 
 export const Route = createFileRoute("/")({ component: App });
 
+const URGENCY: Record<Urgency, { row: string; text: string; badge?: string }> = {
+  overdue: {
+    row: "border-l-overdue bg-overdue/5",
+    text: "text-overdue",
+    badge: "bg-overdue text-white",
+  },
+  "due-today": {
+    row: "border-l-today bg-today/5",
+    text: "text-today",
+    badge: "bg-today text-white",
+  },
+  "due-soon": { row: "border-l-soon", text: "text-soon", badge: "bg-soon text-ink" },
+  upcoming: { row: "border-l-transparent", text: "text-muted" },
+  none: { row: "border-l-transparent", text: "text-muted" },
+  done: { row: "border-l-transparent opacity-60", text: "text-muted" },
+};
+
+const BADGE_LABEL: Partial<Record<Urgency, string>> = {
+  overdue: "Overdue",
+  "due-today": "Today",
+  "due-soon": "Soon",
+};
+
+const field =
+  "rounded-lg border border-line bg-bg px-2 py-1 text-sm text-ink outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20";
+
 function App() {
+  const { todos, loaded, add, complete, reopen, remove, clearDone } = useTodos();
+  const today = useToday();
+  const sorted = sortTodos(todos, today);
+  const active = sorted.filter((t) => !t.completedAt);
+  const done = sorted.filter((t) => t.completedAt);
+  const overdue = active.filter((t) => getUrgency(t, today) === "overdue").length;
+
   return (
-    <main className="page-wrap px-4 pb-8 pt-14">
-      <section className="island-shell rise-in relative overflow-hidden rounded-[2rem] px-6 py-10 sm:px-10 sm:py-14">
-        <div className="pointer-events-none absolute -left-20 -top-24 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(79,184,178,0.32),transparent_66%)]" />
-        <div className="pointer-events-none absolute -bottom-20 -right-20 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(47,106,74,0.18),transparent_66%)]" />
-        <p className="island-kicker mb-3">TanStack Start Base Template</p>
-        <h1 className="display-title mb-5 max-w-3xl text-4xl leading-[1.02] font-bold tracking-tight text-[var(--sea-ink)] sm:text-6xl">
-          Start simple, ship quickly.
-        </h1>
-        <p className="mb-8 max-w-2xl text-base text-[var(--sea-ink-soft)] sm:text-lg">
-          This base starter intentionally keeps things light: two routes, clean structure, and the
-          essentials you need to build from scratch.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <a
-            href="/about"
-            className="rounded-full border border-[rgba(50,143,151,0.3)] bg-[rgba(79,184,178,0.14)] px-5 py-2.5 text-sm font-semibold text-[var(--lagoon-deep)] no-underline transition hover:-translate-y-0.5 hover:bg-[rgba(79,184,178,0.24)]"
-          >
-            About This Starter
-          </a>
-          <a
-            href="https://tanstack.com/router"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-full border border-[rgba(23,58,64,0.2)] bg-white/50 px-5 py-2.5 text-sm font-semibold text-[var(--sea-ink)] no-underline transition hover:-translate-y-0.5 hover:border-[rgba(23,58,64,0.35)]"
-          >
-            Router Guide
-          </a>
+    <main className="mx-auto max-w-2xl px-4 py-12">
+      <header className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Todo<span className="text-accent">z</span>
+          </h1>
+          <p className="mt-1 text-sm text-muted">
+            {active.length} open
+            {overdue > 0 && (
+              <span className="font-semibold text-overdue"> · {overdue} overdue</span>
+            )}
+          </p>
         </div>
+        <ThemeToggle />
+      </header>
+
+      <section className="rounded-2xl border border-line bg-surface p-4 shadow-sm">
+        <NewTodoForm onAdd={add} today={today} />
       </section>
 
-      <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          ["Type-Safe Routing", "Routes and links stay in sync across every page."],
-          ["Server Functions", "Call server code from your UI without creating API boilerplate."],
-          ["Streaming by Default", "Ship progressively rendered responses for faster experiences."],
-          ["Tailwind Native", "Design quickly with utility-first styling and reusable tokens."],
-        ].map(([title, desc], index) => (
-          <article
-            key={title}
-            className="island-shell feature-card rise-in rounded-2xl p-5"
-            style={{ animationDelay: `${index * 90 + 80}ms` }}
-          >
-            <h2 className="mb-2 text-base font-semibold text-[var(--sea-ink)]">{title}</h2>
-            <p className="m-0 text-sm text-[var(--sea-ink-soft)]">{desc}</p>
-          </article>
-        ))}
-      </section>
-
-      <section className="island-shell mt-8 rounded-2xl p-6">
-        <p className="island-kicker mb-2">Quick Start</p>
-        <ul className="m-0 list-disc space-y-2 pl-5 text-sm text-[var(--sea-ink-soft)]">
-          <li>
-            Edit <code>src/routes/index.tsx</code> to customize the home page.
-          </li>
-          <li>
-            Update <code>src/components/Header.tsx</code> and <code>src/components/Footer.tsx</code>{" "}
-            for brand links.
-          </li>
-          <li>
-            Add routes in <code>src/routes</code> and tweak visual tokens in{" "}
-            <code>src/styles.css</code>.
-          </li>
+      <section className="mt-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
+        <ul className="divide-y divide-line">
+          {active.map((todo) => (
+            <TodoItem
+              key={todo.id}
+              todo={todo}
+              today={today}
+              onToggle={() => complete(todo.id)}
+              onRemove={() => remove(todo.id)}
+            />
+          ))}
         </ul>
+        {loaded && active.length === 0 && (
+          <p className="py-10 text-center text-sm text-muted">Nothing to do 🎉</p>
+        )}
       </section>
+
+      {done.length > 0 && (
+        <section className="mt-8">
+          <div className="mb-2 flex items-center justify-between px-1 text-xs font-semibold tracking-wide text-muted uppercase">
+            <h2>Done</h2>
+            <button onClick={clearDone} className="hover:text-ink">
+              Clear
+            </button>
+          </div>
+          <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
+            {done.map((todo) => (
+              <TodoItem
+                key={todo.id}
+                todo={todo}
+                today={today}
+                onToggle={() => reopen(todo.id)}
+                onRemove={() => remove(todo.id)}
+              />
+            ))}
+          </ul>
+        </section>
+      )}
     </main>
+  );
+}
+
+function NewTodoForm({
+  onAdd,
+  today,
+}: {
+  onAdd: (todo: Omit<Todo, "id" | "createdAt">) => void;
+  today: string;
+}) {
+  const [title, setTitle] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [repeats, setRepeats] = useState(false);
+  const [every, setEvery] = useState(1);
+  const [unit, setUnit] = useState<RecurrenceUnit>("week");
+
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    const trimmed = title.trim();
+    if (!trimmed) return;
+    onAdd({
+      title: trimmed,
+      // Recurring todos need an anchor date; default to today.
+      dueDate: dueDate || (repeats ? today : undefined),
+      recurrence: repeats ? { every: Math.max(1, every), unit } : undefined,
+    });
+    setTitle("");
+    setDueDate("");
+    setRepeats(false);
+    setEvery(1);
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-3">
+      <div className="flex gap-2">
+        <input
+          className={`${field} flex-1 py-2 text-base`}
+          placeholder="Add a todo…"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          aria-label="Title"
+        />
+        <button
+          type="submit"
+          className="rounded-lg bg-accent px-4 text-sm font-semibold text-accent-ink transition hover:opacity-90 disabled:opacity-40"
+          disabled={!title.trim()}
+        >
+          Add
+        </button>
+      </div>
+      <div className="flex flex-wrap items-center gap-4 text-sm text-muted">
+        <label className="flex items-center gap-2">
+          {repeats ? "Starts" : "Due"}
+          <input
+            type="date"
+            className={field}
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+          />
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            className="accent-accent"
+            checked={repeats}
+            onChange={(e) => setRepeats(e.target.checked)}
+          />
+          Repeat
+        </label>
+        {repeats && (
+          <span className="flex items-center gap-2">
+            every
+            <input
+              type="number"
+              min={1}
+              className={`${field} w-16`}
+              value={every}
+              onChange={(e) => setEvery(Number(e.target.value))}
+              aria-label="Interval"
+            />
+            <select
+              className={field}
+              value={unit}
+              onChange={(e) => setUnit(e.target.value as RecurrenceUnit)}
+              aria-label="Unit"
+            >
+              <option value="day">days</option>
+              <option value="week">weeks</option>
+              <option value="month">months</option>
+            </select>
+          </span>
+        )}
+      </div>
+    </form>
+  );
+}
+
+function TodoItem({
+  todo,
+  today,
+  onToggle,
+  onRemove,
+}: {
+  todo: Todo;
+  today: string;
+  onToggle: () => void;
+  onRemove: () => void;
+}) {
+  const urgency = getUrgency(todo, today);
+  const style = URGENCY[urgency];
+  const isDone = urgency === "done";
+  const badge = BADGE_LABEL[urgency];
+  const due = isDone ? null : describeDue(todo, today);
+
+  return (
+    <li className={`group flex items-center gap-3 border-l-4 px-4 py-3 ${style.row}`}>
+      <input
+        type="checkbox"
+        className="h-4 w-4 cursor-pointer accent-accent"
+        checked={isDone}
+        onChange={onToggle}
+        aria-label={isDone ? "Reopen" : "Complete"}
+      />
+      <div className="min-w-0 flex-1">
+        <p className={isDone ? "text-muted line-through" : "font-medium"}>{todo.title}</p>
+        {(due || todo.recurrence) && (
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+            {badge && (
+              <span className={`rounded-full px-2 py-0.5 font-semibold ${style.badge}`}>
+                {badge}
+              </span>
+            )}
+            {due && <span className={style.text}>{due}</span>}
+            {todo.recurrence && (
+              <span className="rounded-full bg-accent/10 px-2 py-0.5 text-accent">
+                ↻ {describeRecurrence(todo.recurrence)}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+      <button
+        onClick={onRemove}
+        className="rounded p-1 text-muted opacity-0 transition group-hover:opacity-100 hover:text-overdue focus:opacity-100"
+        aria-label="Delete"
+      >
+        ✕
+      </button>
+    </li>
   );
 }

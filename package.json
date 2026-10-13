@@ -6,12 +6,11 @@
     "#/*": "./src/*"
   },
   "scripts": {
-    "dev": "vp dev --port 3000",
+    "dev": "vp dev",
     "generate-routes": "tsr generate",
     "build": "vp build",
     "preview": "vp preview"
   },
-  "packageManager": "pnpm@12.12.1+sha512.b7f98934c0b1f29a65f5da52f2d7f994e7faad573ffdddea1497fb4dcb5aec051590ee7c7d95a38172b4bfae103a5b83edf2ee866e11731c2cafa96063610ac5",
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-devtools": "0.10.13",
@@ -23,7 +22,6 @@
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
-    "@tailwindcss/typography": "^0.5.16",
     "@tanstack/devtools-vite": "0.8.5",
     "@tanstack/router-cli": "^1.132.0",
     "@types/node": "^22.10.2",
@@ -36,5 +34,6 @@
   },
   "overrides": {
     "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0"
-  }
+  },
+  "packageManager": "pnpm@12.12.1+sha512.b7f98934c0b1f29a65f5da52f2d7f994e7faad573ffdddea1497fb4dcb5aec051590ee7c7d95a38172b4bfae103a5b83edf2ee866e11731c2cafa96063610ac5"
 }
