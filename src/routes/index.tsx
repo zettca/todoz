@@ -8,8 +8,8 @@ import {
   type RecurrenceUnit,
   type Todo,
   type Urgency,
-} from "#/lib/todos";
-import { useToday, useTodos } from "#/lib/useTodos";
+} from "#/features/todos/domain";
+import { useToday, useTodos } from "#/features/todos/useTodos";
 
 export const Route = createFileRoute("/")({ component: App });
 

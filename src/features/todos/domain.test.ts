@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { addInterval, completeTodo, getUrgency, sortTodos, type Todo } from "./todos";
+import { addInterval, completeTodo, getUrgency, sortTodos, type Todo } from "./domain";
 
 const base: Todo = { id: "1", title: "t", createdAt: "2026-01-01T00:00:00.000Z" };
 

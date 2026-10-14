@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { completeTodo, reopenTodo, toISODate, type Todo } from "./todos";
+import { completeTodo, reopenTodo, toISODate, type Todo } from "./domain";
 
 const STORAGE_KEY = "todoz:todos";
 
