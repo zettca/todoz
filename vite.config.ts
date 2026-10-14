@@ -19,7 +19,12 @@ const config = defineConfig({
   plugins: lazyPlugins(() => [
     devtools(),
     tailwindcss(),
-    tanstackStart({ prerender: { enabled: true } }),
+    tanstackStart({
+      prerender: { enabled: true },
+      pages: [{ path: "/" }],
+      // GitHub Pages serves 404.html for unknown paths, so it doubles as the SPA fallback.
+      spa: { enabled: true, maskPath: "/?shell", prerender: { outputPath: "/404" } },
+    }),
     viteReact(),
   ]),
 });

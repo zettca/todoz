@@ -1,15 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import ThemeToggle from "#/components/ThemeToggle";
 import {
   describeDue,
   describeRecurrence,
   getUrgency,
   sortTodos,
-  type RecurrenceUnit,
   type Todo,
   type Urgency,
 } from "#/features/todos/domain";
-import { useToday, useTodos } from "#/features/todos/useTodos";
+import { ScheduleFields, field, parseTodoForm } from "#/features/todos/TodoForm";
+import { useToday, useTodos, type TodoFields } from "#/features/todos/useTodos";
 
 export const Route = createFileRoute("/")({ component: App });
 
@@ -35,9 +35,6 @@ const BADGE_LABEL: Partial<Record<Urgency, string>> = {
   "due-today": "Today",
   "due-soon": "Soon",
 };
-
-const field =
-  "rounded-lg border border-line bg-bg px-2 py-1 text-sm text-ink outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20";
 
 function App() {
   const { todos, loaded, add, complete, reopen, remove, clearDone } = useTodos();
@@ -110,29 +107,10 @@ function App() {
   );
 }
 
-function NewTodoForm({
-  onAdd,
-  today,
-}: {
-  onAdd: (todo: Omit<Todo, "id" | "createdAt">) => void;
-  today: string;
-}) {
+function NewTodoForm({ onAdd, today }: { onAdd: (todo: TodoFields) => void; today: string }) {
   function addTodo(data: FormData) {
-    const title = (data.get("title") as string).trim();
-    if (!title) return;
-    const dueDate = (data.get("dueDate") as string) || undefined;
-    const repeats = data.has("repeats");
-    onAdd({
-      title,
-      // Recurring todos need an anchor date; default to today.
-      dueDate: dueDate ?? (repeats ? today : undefined),
-      recurrence: repeats
-        ? {
-            every: Math.max(1, Number(data.get("every")) || 1),
-            unit: data.get("unit") as RecurrenceUnit,
-          }
-        : undefined,
-    });
+    const todo = parseTodoForm(data, today);
+    if (todo) onAdd(todo);
   }
 
   return (
@@ -152,34 +130,7 @@ function NewTodoForm({
           Add
         </button>
       </div>
-      <div className="flex flex-wrap items-center gap-4 text-sm text-muted">
-        <label className="flex items-center gap-2">
-          <span className="group-has-[[name=repeats]:checked]:hidden">Due</span>
-          <span className="hidden group-has-[[name=repeats]:checked]:inline">Starts</span>
-          <input type="date" name="dueDate" className={field} />
-        </label>
-        <label className="flex items-center gap-2">
-          <input type="checkbox" name="repeats" className="accent-accent" />
-          Repeat
-        </label>
-        <span className="hidden items-center gap-2 group-has-[[name=repeats]:checked]:flex">
-          every
-          <input
-            type="text"
-            name="every"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            defaultValue={1}
-            className={`${field} w-16`}
-            aria-label="Interval"
-          />
-          <select name="unit" defaultValue="week" className={field} aria-label="Unit">
-            <option value="day">days</option>
-            <option value="week">weeks</option>
-            <option value="month">months</option>
-          </select>
-        </span>
-      </div>
+      <ScheduleFields />
     </form>
   );
 }
@@ -202,7 +153,9 @@ function TodoItem({
   const due = isDone ? null : describeDue(todo, today);
 
   return (
-    <li className={`group flex items-center gap-3 border-l-4 px-4 py-3 ${style.row}`}>
+    <li
+      className={`group flex items-center gap-3 border-l-4 px-4 py-3 transition hover:bg-ink/[0.03] ${style.row}`}
+    >
       <input
         type="checkbox"
         className="h-4 w-4 cursor-pointer accent-accent"
@@ -210,7 +163,11 @@ function TodoItem({
         onChange={onToggle}
         aria-label={isDone ? "Reopen" : "Complete"}
       />
-      <div className="min-w-0 flex-1 gap-1">
+      <Link
+        to="/$id"
+        params={{ id: todo.id }}
+        className="min-w-0 flex-1 gap-1 rounded outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+      >
         <p className={isDone ? "text-muted line-through" : "font-medium"}>{todo.title}</p>
         {(due || todo.recurrence) && (
           <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -227,7 +184,7 @@ function TodoItem({
             )}
           </div>
         )}
-      </div>
+      </Link>
       <button
         onClick={onRemove}
         className="rounded p-1 text-muted opacity-0 transition group-hover:opacity-100 hover:text-overdue focus:opacity-100"
