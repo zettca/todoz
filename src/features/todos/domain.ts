@@ -67,7 +67,8 @@ export function getUrgency(todo: Todo, today: string): Urgency {
 
 /**
  * Completing a recurring todo advances its due date to the next occurrence after today,
- * skipping any missed occurrences. One-off todos are simply marked done.
+ * skipping any missed occurrences, but never more than one period from today (so completing
+ * early, or repeatedly, can't push it further out). One-off todos are simply marked done.
  */
 export function completeTodo(todo: Todo, now: Date): Todo {
   const nowIso = now.toISOString();
@@ -75,6 +76,8 @@ export function completeTodo(todo: Todo, now: Date): Todo {
   const today = toISODate(now);
   let next = addInterval(todo.dueDate, todo.recurrence);
   while (daysBetween(today, next) <= 0) next = addInterval(next, todo.recurrence);
+  const latest = addInterval(today, todo.recurrence);
+  if (daysBetween(latest, next) > 0) next = latest;
   return {
     ...todo,
     dueDate: next,

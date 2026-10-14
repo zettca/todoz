@@ -43,9 +43,21 @@ describe("completeTodo", () => {
     expect(done.dueDate).toBe("2026-05-15");
     expect(done.completedCount).toBe(1);
   });
-  it("completing early moves to the next occurrence", () => {
+  it("completing early never schedules beyond one period from today", () => {
     const todo = { ...base, dueDate: "2026-05-12", recurrence: { every: 3, unit: "day" as const } };
-    expect(completeTodo(todo, now).dueDate).toBe("2026-05-15");
+    expect(completeTodo(todo, now).dueDate).toBe("2026-05-13");
+  });
+  it("completing repeatedly stays one period from today", () => {
+    // 5 days left on a weekly todo.
+    const todo = {
+      ...base,
+      dueDate: "2026-05-15",
+      recurrence: { every: 1, unit: "week" as const },
+    };
+    const once = completeTodo(todo, now);
+    const twice = completeTodo(once, now);
+    expect(once.dueDate).toBe("2026-05-17");
+    expect(twice.dueDate).toBe("2026-05-17");
   });
 });
 
