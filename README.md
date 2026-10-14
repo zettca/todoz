@@ -6,6 +6,7 @@ A small todo app where todos behave like tasks:
 - **Recurring todos**: repeat every N days, weeks or months. Checking one off rolls it to the next occurrence (skipping any missed ones).
 - **Overdue highlighting**: todos are colour-coded as _overdue_, _due today_ or _due soon_ (within 2 days), and sorted by urgency.
 - Light / dark / auto theme.
+- Installable as an app.
 
 Todos are stored in your browser's `localStorage`. There is no backend and no account.
 
