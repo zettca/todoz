@@ -1,13 +1,7 @@
 import { useEffect, useState } from "react";
-import {
-  completeTodo,
-  createLogEntry,
-  reopenTodo,
-  toISODate,
-  type LogEntry,
-  type Todo,
-} from "./domain";
-import { createLocalStore } from "./localStore";
+import { completeTodo, createLogEntry, reopenTodo, type LogEntry, type Todo } from "./domain";
+import { toISODate } from "#/utils/date";
+import { createLocalStore } from "#/utils/localStore";
 
 export type TodoFields = Pick<Todo, "title" | "dueDate" | "recurrence">;
 

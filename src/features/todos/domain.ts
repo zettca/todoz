@@ -1,3 +1,5 @@
+import { daysBetween, parseISODate, toISODate } from "#/utils/date";
+
 export type RecurrenceUnit = "day" | "week" | "month";
 
 export interface Recurrence {
@@ -21,24 +23,6 @@ export interface Todo {
 export type Urgency = "done" | "overdue" | "due-today" | "due-soon" | "upcoming" | "none";
 
 export const DUE_SOON_DAYS = 2;
-
-export function toISODate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-export function parseISODate(iso: string): Date {
-  const [y, m, d] = iso.split("-").map(Number);
-  return new Date(y, m - 1, d);
-}
-
-/** Whole calendar days from `from` to `to` (negative if `to` is earlier). */
-export function daysBetween(from: string, to: string): number {
-  const ms = parseISODate(to).getTime() - parseISODate(from).getTime();
-  return Math.round(ms / 86_400_000);
-}
 
 export function addInterval(iso: string, { every, unit }: Recurrence): string {
   const date = parseISODate(iso);

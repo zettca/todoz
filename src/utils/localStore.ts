@@ -39,6 +39,7 @@ export function createLocalStore<T>(key: string) {
 
   return {
     get: getSnapshot,
+    subscribe,
     set(fn: (prev: T[]) => T[]) {
       cache = fn(getSnapshot());
       window.localStorage.setItem(key, JSON.stringify(cache));

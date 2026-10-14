@@ -12,10 +12,20 @@ import {
 const base: Todo = { id: "1", title: "t", createdAt: "2026-01-01T00:00:00.000Z" };
 
 describe("addInterval", () => {
-  it("adds days, weeks and clamps months", () => {
+  it("adds days and weeks", () => {
     expect(addInterval("2026-01-30", { every: 3, unit: "day" })).toBe("2026-02-02");
     expect(addInterval("2026-01-01", { every: 2, unit: "week" })).toBe("2026-01-15");
+    expect(addInterval("2026-12-28", { every: 1, unit: "week" })).toBe("2027-01-04");
+  });
+  it("adds months, clamping to the end of shorter months", () => {
+    expect(addInterval("2026-01-15", { every: 1, unit: "month" })).toBe("2026-02-15");
     expect(addInterval("2026-01-31", { every: 1, unit: "month" })).toBe("2026-02-28");
+    expect(addInterval("2024-01-31", { every: 1, unit: "month" })).toBe("2024-02-29");
+    expect(addInterval("2026-11-30", { every: 3, unit: "month" })).toBe("2027-02-28");
+  });
+  it("subtracts with negative intervals", () => {
+    expect(addInterval("2026-03-01", { every: -1, unit: "day" })).toBe("2026-02-28");
+    expect(addInterval("2026-03-31", { every: -1, unit: "month" })).toBe("2026-02-28");
   });
 });
 
