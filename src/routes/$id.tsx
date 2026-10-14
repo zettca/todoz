@@ -47,7 +47,7 @@ function TodoPage() {
           name="title"
           required
           defaultValue={todo.title}
-          className={`${field} w-full py-2 text-lg font-semibold`}
+          className={`${field} w-full py-2 text-xl font-semibold`}
           aria-label="Title"
         />
         <ScheduleFields todo={todo} />

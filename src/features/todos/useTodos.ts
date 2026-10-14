@@ -1,78 +1,59 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
-import { completeTodo, reopenTodo, toISODate, type Todo } from "./domain";
-
-const STORAGE_KEY = "todoz:todos";
+import { useEffect, useState } from "react";
+import {
+  completeTodo,
+  createLogEntry,
+  reopenTodo,
+  toISODate,
+  type LogEntry,
+  type Todo,
+} from "./domain";
+import { createLocalStore } from "./localStore";
 
 export type TodoFields = Pick<Todo, "title" | "dueDate" | "recurrence">;
 
-function load(): Todo[] {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Todo[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-// Shared store so every page sees the same todos and writes are persisted immediately,
-// even if the component that made the change unmounts right after (e.g. save + navigate).
-let cache: Todo[] | undefined;
-const listeners = new Set<() => void>();
-
-function getSnapshot(): Todo[] {
-  cache ??= load();
-  return cache;
-}
-
-function getServerSnapshot(): Todo[] | undefined {
-  return undefined;
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  const onStorage = (e: StorageEvent) => {
-    if (e.key !== STORAGE_KEY) return;
-    cache = undefined;
-    listener();
-  };
-  window.addEventListener("storage", onStorage);
-  return () => {
-    listeners.delete(listener);
-    window.removeEventListener("storage", onStorage);
-  };
-}
-
-function setTodos(fn: (prev: Todo[]) => Todo[]) {
-  cache = fn(getSnapshot());
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(cache));
-  listeners.forEach((l) => l());
-}
+const todoStore = createLocalStore<Todo>("todoz:todos");
+const logStore = createLocalStore<LogEntry>("todoz:log");
 
 function update(id: string, fn: (t: Todo) => Todo) {
-  setTodos((prev) => prev.map((t) => (t.id === id ? fn(t) : t)));
+  todoStore.set((prev) => prev.map((t) => (t.id === id ? fn(t) : t)));
+}
+
+function complete(id: string) {
+  const todo = todoStore.get().find((t) => t.id === id);
+  if (!todo || todo.completedAt) return;
+  const now = new Date();
+  const completed = completeTodo(todo, now);
+  update(id, () => completed);
+  logStore.set((prev) => [...prev, createLogEntry(todo, now)]);
 }
 
 const actions = {
   add: (fields: TodoFields) =>
-    setTodos((prev) => [
+    todoStore.set((prev) => [
       ...prev,
       { ...fields, id: crypto.randomUUID(), createdAt: new Date().toISOString() },
     ]),
   edit: (id: string, fields: TodoFields) => update(id, (t) => ({ ...t, ...fields })),
-  complete: (id: string) => update(id, (t) => completeTodo(t, new Date())),
+  complete,
   reopen: (id: string) => update(id, reopenTodo),
-  remove: (id: string) => setTodos((prev) => prev.filter((t) => t.id !== id)),
-  clearDone: () => setTodos((prev) => prev.filter((t) => !t.completedAt)),
+  remove: (id: string) => todoStore.set((prev) => prev.filter((t) => t.id !== id)),
+  clearDone: () => todoStore.set((prev) => prev.filter((t) => !t.completedAt)),
 };
 
 export function useTodos() {
-  const todos = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const todos = todoStore.use();
   return { todos: todos ?? [], loaded: todos !== undefined, ...actions };
 }
 
 export function useTodo(id: string) {
   const { todos, loaded, ...rest } = useTodos();
   return { todo: todos.find((t) => t.id === id), loaded, ...rest };
+}
+
+/** All completions, newest first. */
+export function useLog() {
+  const log = logStore.use();
+  return { log: log ? [...log].reverse() : [], loaded: log !== undefined };
 }
 
 /** Today's date, refreshed every minute so highlights update across midnight. */

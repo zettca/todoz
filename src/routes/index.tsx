@@ -58,7 +58,12 @@ function App() {
             )}
           </p>
         </div>
-        <ThemeToggle />
+        <div className="flex items-center gap-3">
+          <Link to="/logs" className="text-sm font-semibold text-muted hover:text-ink">
+            Log
+          </Link>
+          <ThemeToggle />
+        </div>
       </header>
 
       <section className="rounded-2xl border border-line bg-surface p-4 shadow-sm">

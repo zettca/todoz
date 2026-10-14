@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vite-plus/test";
-import { addInterval, completeTodo, getUrgency, sortTodos, type Todo } from "./domain";
+import {
+  addInterval,
+  completeTodo,
+  createLogEntry,
+  describeTiming,
+  getUrgency,
+  sortTodos,
+  type Todo,
+} from "./domain";
 
 const base: Todo = { id: "1", title: "t", createdAt: "2026-01-01T00:00:00.000Z" };
 
@@ -68,4 +76,19 @@ it("sorts overdue first", () => {
     { ...base, id: "c", dueDate: "2026-05-10" },
   ];
   expect(sortTodos(todos, "2026-05-10").map((t) => t.id)).toEqual(["b", "c", "a"]);
+});
+
+describe("describeTiming", () => {
+  const todo: Todo = { ...base, dueDate: "2026-05-10" };
+  it.each([
+    [new Date(2026, 4, 8, 9), "On time"],
+    [new Date(2026, 4, 10, 23), "On time"],
+    [new Date(2026, 4, 11, 1), "1 day late"],
+    [new Date(2026, 4, 13, 12), "3 days late"],
+  ])("%s -> %s", (now, expected) => {
+    expect(describeTiming(createLogEntry(todo, now))).toBe(expected);
+  });
+  it("is null without a deadline", () => {
+    expect(describeTiming(createLogEntry(base, new Date()))).toBeNull();
+  });
 });

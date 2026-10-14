@@ -122,3 +122,36 @@ export function describeDue(todo: Todo, today: string): string | null {
   if (diff < 0) return `${-diff} days overdue`;
   return `Due in ${diff} days`;
 }
+
+/** One completion of a todo. Title is a snapshot so the log survives renames and deletion. */
+export interface LogEntry {
+  id: string;
+  todoId: string;
+  title: string;
+  completedAt: string;
+  /** Due date of the occurrence that was completed, if any. */
+  dueDate?: string;
+}
+
+export function createLogEntry(todo: Todo, now: Date): LogEntry {
+  return {
+    id: crypto.randomUUID(),
+    todoId: todo.id,
+    title: todo.title,
+    completedAt: now.toISOString(),
+    dueDate: todo.dueDate,
+  };
+}
+
+/** Days late (positive), early (negative) or on the due date (0); null without a deadline. */
+export function daysLate(entry: LogEntry): number | null {
+  if (!entry.dueDate) return null;
+  return daysBetween(entry.dueDate, toISODate(new Date(entry.completedAt)));
+}
+
+export function describeTiming(entry: LogEntry): string | null {
+  const late = daysLate(entry);
+  if (late === null) return null;
+  if (late <= 0) return "On time";
+  return late === 1 ? "1 day late" : `${late} days late`;
+}
