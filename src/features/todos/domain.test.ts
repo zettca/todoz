@@ -59,6 +59,16 @@ describe("completeTodo", () => {
     const done = completeTodo(todo, now);
     expect(done.completedAt).toBeUndefined();
     expect(done.dueDate).toBe("2026-05-15");
+    expect(done.completedCount).toBe(2);
+  });
+  it("completes just one overdue instance when asked", () => {
+    const todo = {
+      ...base,
+      dueDate: "2026-05-01",
+      recurrence: { every: 1, unit: "week" as const },
+    };
+    const done = completeTodo(todo, now, "one");
+    expect(done.dueDate).toBe("2026-05-08");
     expect(done.completedCount).toBe(1);
   });
   it("completing early never schedules beyond one period from today", () => {

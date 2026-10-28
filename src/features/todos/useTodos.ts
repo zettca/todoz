@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { completeTodo, createLogEntry, reopenTodo, type LogEntry, type Todo } from "./domain";
+import {
+  completeTodo,
+  createLogEntry,
+  overdueInstances,
+  reopenTodo,
+  type LogEntry,
+  type Todo,
+} from "./domain";
 import { toISODate } from "#/utils/date";
 import { createLocalStore } from "#/utils/localStore";
 
@@ -12,13 +19,18 @@ function update(id: string, fn: (t: Todo) => Todo) {
   todoStore.set((prev) => prev.map((t) => (t.id === id ? fn(t) : t)));
 }
 
-function complete(id: string) {
+function complete(id: string, mode: "one" | "all" = "all") {
   const todo = todoStore.get().find((t) => t.id === id);
   if (!todo || todo.completedAt) return;
   const now = new Date();
-  const completed = completeTodo(todo, now);
+  const completed = completeTodo(todo, now, mode);
   update(id, () => completed);
-  logStore.set((prev) => [...prev, createLogEntry(todo, now)]);
+  const overdue = mode === "all" ? overdueInstances(todo, toISODate(now)) : [];
+  const entries =
+    overdue.length > 1
+      ? overdue.map((dueDate) => createLogEntry({ ...todo, dueDate }, now))
+      : [createLogEntry(todo, now)];
+  logStore.set((prev) => [...prev, ...entries]);
 }
 
 const actions = {

@@ -1,9 +1,12 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { useRef, useState } from "react";
+import DialogForm from "#/components/DialogForm";
 import ThemeToggle from "#/components/ThemeToggle";
 import {
   describeDue,
   describeRecurrence,
   getUrgency,
+  overdueInstances,
   sortTodos,
   type Todo,
   type Urgency,
@@ -43,9 +46,56 @@ function App() {
   const active = sorted.filter((t) => !t.completedAt);
   const done = sorted.filter((t) => t.completedAt);
   const overdue = active.filter((t) => getUrgency(t, today) === "overdue").length;
+  const [pending, setPending] = useState<{ id: string; title: string; count: number } | null>(null);
+
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  function onComplete(todo: Todo) {
+    const count = overdueInstances(todo, today).length;
+    if (count > 1) {
+      setPending({ id: todo.id, title: todo.title, count });
+      dialogRef.current?.showModal();
+    } else complete(todo.id);
+  }
+
+  function onDialogSubmit(data: FormData) {
+    const mode = data.get("mode");
+    if (pending && (mode === "one" || mode === "all")) complete(pending.id, mode);
+    setPending(null);
+  }
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-12">
+      <DialogForm
+        dialogRef={dialogRef}
+        title={pending?.title ?? ""}
+        description={`This todo is overdue ${pending?.count} times. Complete all of them or just one?`}
+        onSubmit={onDialogSubmit}
+        onClose={() => setPending(null)}
+      >
+        {pending && (
+          <>
+            <div className="mt-4 flex flex-col gap-2">
+              <button
+                autoFocus
+                name="mode"
+                value="all"
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-ink hover:opacity-90"
+              >
+                Complete all {pending.count}
+              </button>
+              <button
+                name="mode"
+                value="one"
+                className="rounded-lg border border-line px-4 py-2 text-sm font-semibold hover:bg-ink/5"
+              >
+                Complete just 1
+              </button>
+              <button className="px-4 py-2 text-sm text-muted hover:text-ink">Cancel</button>
+            </div>
+          </>
+        )}
+      </DialogForm>
       <header className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
@@ -94,7 +144,7 @@ function App() {
               key={todo.id}
               todo={todo}
               today={today}
-              onToggle={() => complete(todo.id)}
+              onToggle={() => onComplete(todo)}
               onRemove={() => remove(todo.id)}
             />
           ))}

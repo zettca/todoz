@@ -54,20 +54,39 @@ export function getUrgency(todo: Todo, today: string): Urgency {
  * skipping any missed occurrences, but never more than one period from today (so completing
  * early, or repeatedly, can't push it further out). One-off todos are simply marked done.
  */
-export function completeTodo(todo: Todo, now: Date): Todo {
+export function completeTodo(todo: Todo, now: Date, mode: "one" | "all" = "all"): Todo {
   const nowIso = now.toISOString();
   if (!todo.recurrence || !todo.dueDate) return { ...todo, completedAt: nowIso };
   const today = toISODate(now);
   let next = addInterval(todo.dueDate, todo.recurrence);
-  while (daysBetween(today, next) <= 0) next = addInterval(next, todo.recurrence);
-  const latest = addInterval(today, todo.recurrence);
-  if (daysBetween(latest, next) > 0) next = latest;
+  if (mode === "all") {
+    while (daysBetween(today, next) <= 0) next = addInterval(next, todo.recurrence);
+    const latest = addInterval(today, todo.recurrence);
+    if (daysBetween(latest, next) > 0) next = latest;
+  }
   return {
     ...todo,
     dueDate: next,
     lastCompletedAt: nowIso,
-    completedCount: (todo.completedCount ?? 0) + 1,
+    completedCount:
+      (todo.completedCount ?? 0) + (mode === "all" ? countOverdueInstances(todo, today) || 1 : 1),
   };
+}
+
+/** Due dates of a recurring todo's occurrences that are strictly before `today`. */
+export function overdueInstances(todo: Todo, today: string): string[] {
+  if (!todo.recurrence || !todo.dueDate || todo.completedAt) return [];
+  const dates: string[] = [];
+  let d = todo.dueDate;
+  while (daysBetween(today, d) < 0) {
+    dates.push(d);
+    d = addInterval(d, todo.recurrence);
+  }
+  return dates;
+}
+
+function countOverdueInstances(todo: Todo, today: string): number {
+  return overdueInstances(todo, today).length;
 }
 
 export function reopenTodo(todo: Todo): Todo {
